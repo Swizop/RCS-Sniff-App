@@ -1,0 +1,4 @@
+Event 1. Phone 1 is writing a message for Phone 2
+Event 2. Phone 1 is writing a message for Phone 2
+Event 3. Phone 2 is writing a message for Phone 1
+Event 4. Phone 2 is writing a message for Phone 1
