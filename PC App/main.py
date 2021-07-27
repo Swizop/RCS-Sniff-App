@@ -2,7 +2,7 @@ from asyncio.windows_events import NULL
 import pyshark
 
 def main():
-    capture = pyshark.FileCapture('20210726-124925.cap')
+    capture = pyshark.FileCapture('20210727-130036.cap')
     g = open("output.txt", 'w')
     eventsNr = 0
     oneSentUnresolved = False
@@ -22,6 +22,13 @@ def main():
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 2 is writing a message for Phone 1\n")
                 oneSentUnresolved = False
+
+            
+            elif pkt.ip.src == '10.0.0.1' and pkt.ip.dst in ['216.239.36.128', '216.239.36.129','216.239.36.130'] \
+                and pkt.ip.len == '491' and pkt.tcp.flags_push == '1':
+                eventsNr += 1
+                g.write(f"Event {eventsNr}. Phone 1 has seen a message from Phone 2\n")
+                oneSentUnresolved = False 
             
 
             elif pkt.ip.src == '10.0.0.1' and pkt.ip.dst in ['216.239.36.128', '216.239.36.129','216.239.36.130'] \
