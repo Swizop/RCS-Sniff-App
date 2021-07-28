@@ -2,7 +2,7 @@ from asyncio.windows_events import NULL
 import pyshark
 
 def main():
-    c = pyshark.FileCapture('20210728-141207.cap', display_filter="(ip.src == 216.239.36.128 || ip.src == 216.239.36.127 || ip.src == 216.239.36.129 || ip.src == 10.0.0.1) && (ip.dst == 10.0.0.1 || ip.dst == 216.239.36.129 || ip.dst == 216.239.36.128 || ip.dst == 216.239.36.127)")
+    c = pyshark.FileCapture('20210728-171035.cap', display_filter="(ip.src == 216.239.36.128 || ip.src == 216.239.36.127 || ip.src == 216.239.36.129 || ip.src == 10.0.0.1) && (ip.dst == 10.0.0.1 || ip.dst == 216.239.36.129 || ip.dst == 216.239.36.128 || ip.dst == 216.239.36.127)")
     capture = list(c)
     c.close()
     g = open("output.txt", 'w')
@@ -45,10 +45,16 @@ def main():
                 nr = int(capture[i].ip.len) - 753
                 j = i + 1
                 b = True
-                for k in range(1, 8):
+                r = 8
+                #capture[i].pretty_print()
+                for k in range(1, r):
                     if j > len(capture):
                         b = False
                         break
+                    #capture[j].pretty_print()
+                    if capture[j].ip.dst == '157.240.22.63':        #somehow, this IP bypasses the display filter, and we must ignore it. so we do it manually
+                        r += 1
+                        continue
                     if twoSentList[k][0] == '1' \
                         and not(capture[j].ip.src == '10.0.0.1' and capture[j].ip.dst in ['216.239.36.128', '216.239.36.129','216.239.36.130']):
                         b = False
