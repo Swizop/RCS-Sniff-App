@@ -1,14 +1,14 @@
-Event 1. Phone 1 sent a text message to Phone 2, which is 3 characters long
+Event 1. Phone 1 has seen a message from Phone 2
 Event 2. Phone 1 sent a text message to Phone 2, which is 2 characters long
-Event 3. Phone 2 is writing a message for Phone 1
-Event 4. Phone 1 has seen a message from Phone 2
-Event 5. Phone 1 is writing a message for Phone 2
-Event 6. Phone 1 is writing a message for Phone 2
-Event 7. Phone 1 sent a text message to Phone 2, which is 19 characters long
-Event 8. Phone 2 is writing a message for Phone 1
-Event 9. Phone 2 is writing a message for Phone 1
-Event 10. Phone 1 has seen a message from Phone 2
-Event 11. Phone 1 is writing a message for Phone 2
-Event 12. Phone 1 sent a text message to Phone 2, which is 1 characters long
+Event 3. Phone 2 sent a text message to Phone 1, which is 224 characters long
+Event 4. Phone 1 is writing a message for Phone 2
+Event 5. Phone 1 sent a text message to Phone 2, which is 4 characters long
+Event 6. Phone 2 is writing a message for Phone 1
+Event 7. Phone 2 is writing a message for Phone 1
+Event 8. Phone 2 sent a text message to Phone 1, which is 5 characters long
+Event 9. Phone 1 has seen a message from Phone 2
+Event 10. Phone 2 is writing a message for Phone 1
+Event 11. Phone 2 sent a text message to Phone 1, which is 2 characters long
+Event 12. Phone 1 has seen a message from Phone 2
 Event 13. Phone 2 is writing a message for Phone 1
-Event 14. Phone 1 has seen a message from Phone 2
+Event 14. Phone 2 sent a text message to Phone 1, which is 2 characters long
