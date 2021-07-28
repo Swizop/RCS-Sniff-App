@@ -31,6 +31,12 @@ def main():
                 and capture[i].ip.len == '491' and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 1 has seen a message from Phone 2\n")
+                oneSentUnresolved = False
+
+            elif capture[i].ip.dst == '10.0.0.1' and capture[i].ip.src in ['216.239.36.128', '216.239.36.129','216.239.36.130'] \
+                and capture[i].ip.len == '977' and capture[i].tcp.flags_push == '1':
+                eventsNr += 1
+                g.write(f"Event {eventsNr}. Phone 2 has seen a message from Phone 1\n")
                 oneSentUnresolved = False 
             
 
