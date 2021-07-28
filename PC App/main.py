@@ -46,12 +46,10 @@ def main():
                 j = i + 1
                 b = True
                 r = 8
-                #capture[i].pretty_print()
                 for k in range(1, r):
                     if j > len(capture):
                         b = False
                         break
-                    #capture[j].pretty_print()
                     if capture[j].ip.dst == '157.240.22.63':        #somehow, this IP bypasses the display filter, and we must ignore it. so we do it manually
                         r += 1
                         continue
