@@ -9,3 +9,5 @@ By scanning a capture, it should be able to detect and signal whenever one of th
 4. The intercepted phone receives a RCS text message from the second phone (the app should also detect the length of the message)
 5. The intercepted phone has opened a RCS message from the second phone
 6. The second phone has opened a RCS message from the intercepted phone
+7. The intercepted phone has sent a RCS multimedia message to the second phone
+8. The intercepted phone has received a RCS multimedia message from the second phone
