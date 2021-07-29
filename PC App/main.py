@@ -2,7 +2,7 @@ from asyncio.windows_events import NULL
 import pyshark
 
 def main():
-    c = pyshark.FileCapture('20210728-171035.cap', display_filter="(ip.src == 216.239.36.128 || ip.src == 216.239.36.127 || ip.src == 216.239.36.129 || ip.src == 10.0.0.1) && (ip.dst == 10.0.0.1 || ip.dst == 216.239.36.129 || ip.dst == 216.239.36.128 || ip.dst == 216.239.36.127)")
+    c = pyshark.FileCapture('20210729-160326.cap', display_filter="(((ip.src == 216.239.36.128 || ip.src == 216.239.36.127 || ip.src == 216.239.36.129 || ip.src == 10.0.0.1) && (ip.dst == 10.0.0.1 || ip.dst == 216.239.36.129 || ip.dst == 216.239.36.128 || ip.dst == 216.239.36.127)) || ip.dst == 216.239.36.147) && !icmp")
     capture = list(c)
     c.close()
     g = open("output.txt", 'w')
@@ -14,6 +14,16 @@ def main():
     i = 0
     while i < len(capture):
         try:
+            if capture[i].ip.dst == '10.0.0.1' and capture[i].ip.src in ['216.239.36.128', '216.239.36.129','216.239.36.130'] \
+                    and capture[i].ip.len == '1500' and capture[i].tcp.flags_push == '1':
+                if capture[i + 5].ip.dst == '216.239.36.147' or capture[i + 6].ip.dst == '216.239.36.147':
+                    eventsNr += 1
+                    g.write(f"Event {eventsNr}. Phone 2 sent a multimedia message to Phone 1\n")
+                    i = i + 6
+                    while i < len(capture) and capture[i].ip.dst == '216.239.36.147':
+                        i += 1
+
+
             if capture[i].ip.src == '10.0.0.1' and capture[i].ip.dst in ['216.239.36.128', '216.239.36.129','216.239.36.130'] \
                     and capture[i].ip.len == '327' and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
@@ -50,9 +60,6 @@ def main():
                     if j > len(capture):
                         b = False
                         break
-                    if capture[j].ip.dst == '157.240.22.63':        #somehow, this IP bypasses the display filter, and we must ignore it. so we do it manually
-                        r += 1
-                        continue
                     if twoSentList[k][0] == '1' \
                         and not(capture[j].ip.src == '10.0.0.1' and capture[j].ip.dst in ['216.239.36.128', '216.239.36.129','216.239.36.130']):
                         b = False
@@ -104,6 +111,20 @@ def main():
                         eventsNr += 1
                         g.write(f"Event {eventsNr}. Phone 1 sent a text message to Phone 2, which is {nr} characters long\n")
                 oneSentUnresolved = False
+
+
+            elif capture[i].ip.dst == '216.239.36.147':
+                eventsNr += 1
+                g.write(f"Event {eventsNr}. Phone 1 sent a multimedia message to Phone 2\n")
+                while i < len(capture):
+                    if capture[i].ip.dst == '216.239.36.147' and capture[i].tcp.flags_fin == '1':
+                        break
+                    i += 1
+                i += 1
+                while i < len(capture):
+                    if capture[i].ip.dst == '216.239.36.147' and capture[i].tcp.flags_ack == '1':
+                        break
+                    i += 1
 
             prev = capture[i]
     
