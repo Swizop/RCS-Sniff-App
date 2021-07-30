@@ -2,7 +2,7 @@ from asyncio.windows_events import NULL
 import pyshark
 
 def main():
-    c = pyshark.FileCapture('20210729-160326.cap', display_filter="(((ip.src == 216.239.36.128 || ip.src == 216.239.36.127 || ip.src == 216.239.36.129 || ip.src == 10.0.0.1) && (ip.dst == 10.0.0.1 || ip.dst == 216.239.36.129 || ip.dst == 216.239.36.128 || ip.dst == 216.239.36.127)) || ip.dst == 216.239.36.147) && !icmp")
+    c = pyshark.FileCapture('20210729-195512.cap', display_filter="(((ip.src == 216.239.36.128 || ip.src == 216.239.36.130 || ip.src == 216.239.36.129 || ip.src == 10.0.0.1) && (ip.dst == 10.0.0.1 || ip.dst == 216.239.36.129 || ip.dst == 216.239.36.128 || ip.dst == 216.239.36.130)) || ip.dst == 216.239.36.147) && !icmp")
     capture = list(c)
     c.close()
     g = open("output.txt", 'w')
@@ -10,18 +10,21 @@ def main():
     oneSentUnresolved = False
     twoSentList = ["2PUSH", "1PUSH", "2ACK", "1ACK", "1PUSH", "2ACK", "2PUSH", "1ACK"]
     prev = NULL
+    secondMultimediaUnresolved = False
 
     i = 0
     while i < len(capture):
         try:
             if capture[i].ip.dst == '10.0.0.1' and capture[i].ip.src in ['216.239.36.128', '216.239.36.129','216.239.36.130'] \
                     and capture[i].ip.len == '1500' and capture[i].tcp.flags_push == '1':
-                if capture[i + 5].ip.dst == '216.239.36.147' or capture[i + 6].ip.dst == '216.239.36.147':
+                if capture[i + 5].ip.dst == '216.239.36.147' or capture[i + 6].ip.dst == '216.239.36.147' or capture[i + 4].ip.dst == '216.239.36.147':
                     eventsNr += 1
                     g.write(f"Event {eventsNr}. Phone 2 sent a multimedia message to Phone 1\n")
                     i = i + 6
+                    secondMultimediaUnresolved = True
                     while i < len(capture) and capture[i].ip.dst == '216.239.36.147':
                         i += 1
+                    oneSentUnresolved = False
 
 
             if capture[i].ip.src == '10.0.0.1' and capture[i].ip.dst in ['216.239.36.128', '216.239.36.129','216.239.36.130'] \
@@ -29,12 +32,14 @@ def main():
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 1 is writing a message for Phone 2\n")
                 oneSentUnresolved = False
+                secondMultimediaUnresolved = False
 
             elif capture[i].ip.dst == '10.0.0.1' and capture[i].ip.src in ['216.239.36.128', '216.239.36.129','216.239.36.130'] \
                     and capture[i].ip.len == '848' and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 2 is writing a message for Phone 1\n")
                 oneSentUnresolved = False
+                secondMultimediaUnresolved = False
 
             
             elif capture[i].ip.src == '10.0.0.1' and capture[i].ip.dst in ['216.239.36.128', '216.239.36.129','216.239.36.130'] \
@@ -42,12 +47,14 @@ def main():
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 1 has seen a message from Phone 2\n")
                 oneSentUnresolved = False
+                secondMultimediaUnresolved = False
 
             elif capture[i].ip.dst == '10.0.0.1' and capture[i].ip.src in ['216.239.36.128', '216.239.36.129','216.239.36.130'] \
                 and capture[i].ip.len == '977' and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 2 has seen a message from Phone 1\n")
                 oneSentUnresolved = False 
+                secondMultimediaUnresolved = False
             
 
             elif capture[i].ip.dst == '10.0.0.1' and capture[i].ip.src in ['216.239.36.128', '216.239.36.129','216.239.36.130'] \
@@ -83,6 +90,7 @@ def main():
                     i = j - 1
                     eventsNr += 1
                     g.write(f"Event {eventsNr}. Phone 2 sent a text message to Phone 1, which is {nr} characters long\n")
+                    secondMultimediaUnresolved = False
 
 
             elif capture[i].ip.src == '10.0.0.1' and capture[i].ip.dst in ['216.239.36.128', '216.239.36.129','216.239.36.130'] \
@@ -111,9 +119,10 @@ def main():
                         eventsNr += 1
                         g.write(f"Event {eventsNr}. Phone 1 sent a text message to Phone 2, which is {nr} characters long\n")
                 oneSentUnresolved = False
+                secondMultimediaUnresolved = False
 
-
-            elif capture[i].ip.dst == '216.239.36.147':
+            elif capture[i].ip.dst == '216.239.36.147' and secondMultimediaUnresolved == False:
+                oneSentUnresolved = False
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 1 sent a multimedia message to Phone 2\n")
                 while i < len(capture):
@@ -125,8 +134,12 @@ def main():
                     if capture[i].ip.dst == '216.239.36.147' and capture[i].tcp.flags_ack == '1':
                         break
                     i += 1
-
-            prev = capture[i]
+            elif capture[i].ip.dst == '216.239.36.147':
+                oneSentUnresolved = False
+            try:
+                prev = capture[i]
+            except IndexError:
+                return
     
             i += 1
         except AttributeError:
