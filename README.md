@@ -12,3 +12,4 @@ By scanning a capture, it should be able to detect and signal whenever one of th
 7. The intercepted phone has sent a RCS multimedia message to the second phone
 8. The intercepted phone has received a RCS multimedia message from the second phone
 9. The intercepted phone has received a shared location through RCS from the second phone
+10. The intercepted phone has sent its location through RCS to the second phone

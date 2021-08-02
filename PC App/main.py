@@ -15,6 +15,9 @@ def main():
     oneSentUnresolved = False
     S1 = "10.0.0.1"
     S2 = ['216.239.36.128', '216.239.36.129','216.239.36.130']
+    googleDNS = 'maps.googleapis.com'
+    lh3DNS = 'lh3.googleusercontent.com'
+    lh5DNS = 'lh5.googleusercontent.com'
     twoSentList = ["2PUSH", "1PUSH", "2ACK", "1ACK", "1PUSH", "2ACK", "2PUSH", "1ACK"]
     twoLocationList = ["2PUSH", "1ACK", "2PUSH", "1ACK", "1PUSH", "2ACK"]
     prev = NULL
@@ -61,7 +64,7 @@ def main():
 
                 if b == True and capture[i].ip.len == '1398':
                     try:
-                        if capture[j].dns.qry_name != 'maps.googleapis.com':
+                        if capture[j].dns.qry_name != googleDNS:
                             b = False
                     except AttributeError:
                         if capture[j].dst != '142.250.0.0/16':
@@ -192,6 +195,14 @@ def main():
                     i += 1
             elif capture[i].ip.dst == '216.239.36.147':
                 oneSentUnresolved = False
+
+            
+            elif capture[i].dns.qry_name in [googleDNS, lh3DNS, lh5DNS]:
+                eventsNr += 1
+                g.write(f"Event {eventsNr}. Phone 1 sent its location to Phone 2\n")
+                while True:
+                    if capture[i].dns.qry_name in [googleDNS, lh3DNS, lh5DNS]:
+                        i += 1
             try:
                 prev = capture[i]
             except IndexError:
