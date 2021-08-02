@@ -3,7 +3,7 @@ from re import T
 import pyshark
 
 def main():
-    c = pyshark.FileCapture('20210802-113112.cap', \
+    c = pyshark.FileCapture('229r10r24r7r8r.cap', \
         display_filter="(((ip.src == 216.239.36.128 || ip.src == 216.239.36.130 || ip.src == 216.239.36.129 || ip.src == 10.0.0.1)\
              && (ip.dst == 10.0.0.1 || ip.dst == 216.239.36.129 || ip.dst == 216.239.36.128 || ip.dst == 216.239.36.130))\
                   || ip.dst == 216.239.36.147 || ip.dst == 142.250.0.0/16 || ip.dst == 216.58.0.0/16 || ip.dst ==  193.231.252.1\
@@ -13,6 +13,7 @@ def main():
     g = open("output.txt", 'w')
     eventsNr = 0
     oneSentUnresolved = False
+    dnsIndex = 0
     S1 = "10.0.0.1"
     S2 = ['216.239.36.128', '216.239.36.129','216.239.36.130']
     S3 = '216.239.36.147'
@@ -20,6 +21,7 @@ def main():
     lh3DNS = 'lh3.googleusercontent.com'
     lh5DNS = 'lh5.googleusercontent.com'
     dstDNS = '193.231.252.1'
+    mediaDNS = 'rcs-user-content-eu.storage.googleapis.com'
     twoSentList = ["2PUSH", "1PUSH", "2ACK", "1ACK", "1PUSH", "2ACK", "2PUSH", "1ACK"]
     twoLocationList = ["2PUSH", "1ACK", "2PUSH", "1ACK", "1PUSH", "2ACK"]
     prev = NULL
@@ -29,13 +31,14 @@ def main():
     while i < len(capture):
         try:
             if capture[i].ip.dst == '10.0.0.1' and capture[i].ip.src in S2 \
-                    and capture[i].ip.len == '1500' and capture[i].tcp.flags_push == '1':
-                if capture[i + 5].ip.dst == S3 or capture[i + 6].ip.dst == '216.239.36.147' or capture[i + 4].ip.dst == S3:
+                    and (capture[i].ip.len == '1398') and capture[i].tcp.flags_push == '1':
+                if capture[i + 5].ip.dst == S3 or capture[i + 6].ip.dst == '216.239.36.147' or capture[i + 4].ip.dst == S3\
+                    or (capture[i + 5].ip.dst == dstDNS and capture[i + 5].dns.qry_name == mediaDNS):
                     eventsNr += 1
                     g.write(f"Event {eventsNr}. Phone 2 sent a multimedia message to Phone 1\n")
                     i = i + 6
                     secondMultimediaUnresolved = True
-                    while i < len(capture) and capture[i].ip.dst == S3:
+                    while i < len(capture) and capture[i].ip.dst in [S3, mediaDNS]:
                         i += 1
                     oneSentUnresolved = False
 
@@ -203,10 +206,12 @@ def main():
             
             elif capture[i].ip.dst == dstDNS:
                 if capture[i].dns.qry_name in [googleDNS, lh3DNS, lh5DNS]:
-                    eventsNr += 1
-                    g.write(f"Event {eventsNr}. Phone 1 sent its location to Phone 2\n")
-                    while capture[i].ip.dst == dstDNS:
-                        i += 1
+                    if dnsIndex == 0:
+                        dnsIndex = 1
+                        eventsNr += 1
+                        g.write(f"Event {eventsNr}. Phone 1 sent its location to Phone 2\n")
+                    else:
+                        dnsIndex -= 1           #there should be 2 DNS packets sent to the IP for the same request
             try:
                 prev = capture[i]
             except IndexError:
