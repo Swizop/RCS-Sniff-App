@@ -3,11 +3,11 @@ from re import T
 import pyshark
 
 def main():
-    c = pyshark.FileCapture('20210801-2loctrimiseunaPrimita.cap', \
+    c = pyshark.FileCapture('20210802-113112.cap', \
         display_filter="(((ip.src == 216.239.36.128 || ip.src == 216.239.36.130 || ip.src == 216.239.36.129 || ip.src == 10.0.0.1)\
              && (ip.dst == 10.0.0.1 || ip.dst == 216.239.36.129 || ip.dst == 216.239.36.128 || ip.dst == 216.239.36.130))\
-                  || ip.dst == 216.239.36.147 || ip.dst == 142.250.0.0/16 || dns.qry.name == maps.googleapis.com \
-                      || dns.qry.name == lh5.googleusercontent.com || dns.qry.name == lh3.googleusercontent.com) && !icmp")
+                  || ip.dst == 216.239.36.147 || ip.dst == 142.250.0.0/16 || ip.dst == 216.58.0.0/16 || ip.dst ==  193.231.252.1\
+                    ) && !icmp")
     capture = list(c)
     c.close()
     g = open("output.txt", 'w')
@@ -15,9 +15,11 @@ def main():
     oneSentUnresolved = False
     S1 = "10.0.0.1"
     S2 = ['216.239.36.128', '216.239.36.129','216.239.36.130']
+    S3 = '216.239.36.147'
     googleDNS = 'maps.googleapis.com'
     lh3DNS = 'lh3.googleusercontent.com'
     lh5DNS = 'lh5.googleusercontent.com'
+    dstDNS = '193.231.252.1'
     twoSentList = ["2PUSH", "1PUSH", "2ACK", "1ACK", "1PUSH", "2ACK", "2PUSH", "1ACK"]
     twoLocationList = ["2PUSH", "1ACK", "2PUSH", "1ACK", "1PUSH", "2ACK"]
     prev = NULL
@@ -28,12 +30,12 @@ def main():
         try:
             if capture[i].ip.dst == '10.0.0.1' and capture[i].ip.src in S2 \
                     and capture[i].ip.len == '1500' and capture[i].tcp.flags_push == '1':
-                if capture[i + 5].ip.dst == '216.239.36.147' or capture[i + 6].ip.dst == '216.239.36.147' or capture[i + 4].ip.dst == '216.239.36.147':
+                if capture[i + 5].ip.dst == S3 or capture[i + 6].ip.dst == '216.239.36.147' or capture[i + 4].ip.dst == S3:
                     eventsNr += 1
                     g.write(f"Event {eventsNr}. Phone 2 sent a multimedia message to Phone 1\n")
                     i = i + 6
                     secondMultimediaUnresolved = True
-                    while i < len(capture) and capture[i].ip.dst == '216.239.36.147':
+                    while i < len(capture) and capture[i].ip.dst == S3:
                         i += 1
                     oneSentUnresolved = False
 
@@ -48,6 +50,8 @@ def main():
                         break
                     if twoLocationList[k][0] == '1' \
                         and not(capture[j].ip.src == '10.0.0.1' and capture[j].ip.dst in S2):
+                        if k == 1:              #sometimes the expected second packet is skipped
+                            continue
                         b = False
                         break
                     if twoLocationList[k][0] == '2' \
@@ -62,12 +66,12 @@ def main():
                         break
                     j += 1
 
-                if b == True and capture[i].ip.len == '1398':
+                if b == True:
                     try:
                         if capture[j].dns.qry_name != googleDNS:
                             b = False
                     except AttributeError:
-                        if capture[j].dst != '142.250.0.0/16':
+                        if capture[j].ip.dst[:7] != '142.250' and capture[j].ip.dst[:6] != '216.58':
                             b = False
 
                     if b == True:
@@ -197,11 +201,11 @@ def main():
                 oneSentUnresolved = False
 
             
-            elif capture[i].dns.qry_name in [googleDNS, lh3DNS, lh5DNS]:
-                eventsNr += 1
-                g.write(f"Event {eventsNr}. Phone 1 sent its location to Phone 2\n")
-                while True:
-                    if capture[i].dns.qry_name in [googleDNS, lh3DNS, lh5DNS]:
+            elif capture[i].ip.dst == dstDNS:
+                if capture[i].dns.qry_name in [googleDNS, lh3DNS, lh5DNS]:
+                    eventsNr += 1
+                    g.write(f"Event {eventsNr}. Phone 1 sent its location to Phone 2\n")
+                    while capture[i].ip.dst == dstDNS:
                         i += 1
             try:
                 prev = capture[i]
