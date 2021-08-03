@@ -21,7 +21,7 @@ def main():
     i = 0
     while i < len(capture):
         try:
-            if capture[i].ip.src in arch["S2"] and (capture[i].ip.len == '1398' or capture[i].ip.len == '1500') and capture[i].tcp.flags_push == '1':
+            if capture[i].ip.src in arch["S2"] and capture[i].ip.len in arch["MM2len"] and capture[i].tcp.flags_push == '1':
                 if capture[i + 5].ip.dst == arch["S3"] or capture[i + 6].ip.dst == arch["S3"] or capture[i + 4].ip.dst == arch["S3"]\
                     or (capture[i + 5].ip.dst == arch["dstDNS"] and capture[i + 5].dns.qry_name == arch["mediaDNS"]):
                     eventsNr += 1
@@ -71,8 +71,7 @@ def main():
                         secondMultimediaUnresolved = False
                         while b == True:
                             if capture[j].ip.dst in arch["S2"] and capture[j + 1].ip.dst in arch["S2"] and capture[j + 1].tcp.flags_push == '1'\
-                                 and capture[j + 2].ip.src in arch["S2"] \
-                                 and capture[j + 3].ip.src in arch["S2"] and capture[j + 3].tcp.flags_push == '1'\
+                                 and capture[j + 2].ip.src in arch["S2"] and capture[j + 3].ip.src in arch["S2"] and capture[j + 3].tcp.flags_push == '1'\
                                       and capture[j + 4].ip.dst in arch["S2"]:
                                 b = False
                                 i = j + 5
@@ -81,26 +80,26 @@ def main():
                             j += 1
 
 
-            if capture[i].ip.dst in arch["S2"] and capture[i].ip.len == '327' and capture[i].tcp.flags_push == '1':
+            if capture[i].ip.dst in arch["S2"] and capture[i].ip.len == arch["W1len"] and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 1 is writing a message for Phone 2\n")
                 oneSentUnresolved = False
                 secondMultimediaUnresolved = False
 
-            elif capture[i].ip.src in arch["S2"] and capture[i].ip.len == '848' and capture[i].tcp.flags_push == '1':
+            elif capture[i].ip.src in arch["S2"] and capture[i].ip.len == arch["W2len"] and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 2 is writing a message for Phone 1\n")
                 oneSentUnresolved = False
                 secondMultimediaUnresolved = False
 
             
-            elif capture[i].ip.dst in arch["S2"] and capture[i].ip.len == '491' and capture[i].tcp.flags_push == '1':
+            elif capture[i].ip.dst in arch["S2"] and capture[i].ip.len == arch["S1len"] and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 1 has seen a message from Phone 2\n")
                 oneSentUnresolved = False
                 secondMultimediaUnresolved = False
 
-            elif capture[i].ip.src in arch["S2"] and capture[i].ip.len == '977' and capture[i].tcp.flags_push == '1':
+            elif capture[i].ip.src in arch["S2"] and capture[i].ip.len == arch["S2len"] and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 2 has seen a message from Phone 1\n")
                 oneSentUnresolved = False 
@@ -108,8 +107,8 @@ def main():
             
 
             elif capture[i].ip.dst == arch["S1"] and capture[i].ip.src in arch["S2"] \
-                and int(capture[i].ip.len) >= 754 and capture[i].tcp.flags_push == '1':
-                nr = int(capture[i].ip.len) - 753
+                and int(capture[i].ip.len) > arch["Sent2len"] and capture[i].tcp.flags_push == '1':
+                nr = int(capture[i].ip.len) - arch["Sent2len"]
                 j = i + 1
                 b = True
                 r = 8
@@ -117,12 +116,10 @@ def main():
                     if j >= len(capture):
                         b = False
                         break
-                    if arch["twoSentList"][k][0] == '1' \
-                        and not(capture[j].ip.src == arch["S1"] and capture[j].ip.dst in arch["S2"]):
+                    if arch["twoSentList"][k][0] == '1' and not(capture[j].ip.dst in arch["S2"]):
                         b = False
                         break
-                    if arch["twoSentList"][k][0] == '2' \
-                        and not(capture[j].ip.dst == arch["S1"] and capture[j].ip.src in arch["S2"]):
+                    if arch["twoSentList"][k][0] == '2' and not(capture[j].ip.src in arch["S2"]):
                         b = False
                         break
                     if capture[j].tcp.flags_push != '1' and arch["twoSentList"][k][1:] == 'PUSH':
@@ -144,18 +141,19 @@ def main():
 
 
             elif capture[i].ip.src == arch["S1"] and capture[i].ip.dst in arch["S2"] \
-                and int(capture[i].ip.len) >= 250 and capture[i].tcp.flags_push == '1' and (prev == NULL or prev.ip.len == '576'):
-                nr = int(capture[i].ip.len) - 250
+                and int(capture[i].ip.len) >= arch["Sent1len"] and capture[i].tcp.flags_push == '1' and\
+                     (prev == NULL or prev.ip.len == arch["Prevlen"]):
+                nr = int(capture[i].ip.len) - arch["Sent1len"]
                 oneSentUnresolved = True
                 expected = "2ACK"
             
             elif oneSentUnresolved == True and capture[i].ip.dst == arch["S1"] and capture[i].ip.src in arch["S2"]:
-                if capture[i].tcp.flags_push == '1' and capture[i].ip.len == '347':
+                if capture[i].tcp.flags_push == '1' and capture[i].ip.len == arch["Pushlen"]:
                     if expected == "2PUSH":
                         expected = "1ACK"
                     else:
                         oneSentUnresolved = False
-                elif capture[i].tcp.flags_ack == '1' and capture[i].ip.len == '40':
+                elif capture[i].tcp.flags_ack == '1' and capture[i].ip.len == arch["Acklen"]:
                     if expected == "2ACK":
                         expected = "2PUSH"
                     else:
@@ -164,7 +162,7 @@ def main():
                     oneSentUnresolved = False
 
             elif oneSentUnresolved == True and capture[i].ip.src == arch["S1"] and capture[i].ip.dst in arch["S2"]:
-                if capture[i].tcp.flags_ack == '1' and capture[i].ip.len == '40':
+                if capture[i].tcp.flags_ack == '1' and capture[i].ip.len == arch["Acklen"]:
                     if expected == "1ACK":
                         eventsNr += 1
                         g.write(f"Event {eventsNr}. Phone 1 sent a text message to Phone 2, which is {nr} characters long\n")
