@@ -81,30 +81,26 @@ def main():
                             j += 1
 
 
-            if capture[i].ip.src == arch["S1"] and capture[i].ip.dst in arch["S2"] \
-                    and capture[i].ip.len == '327' and capture[i].tcp.flags_push == '1':
+            if capture[i].ip.dst in arch["S2"] and capture[i].ip.len == '327' and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 1 is writing a message for Phone 2\n")
                 oneSentUnresolved = False
                 secondMultimediaUnresolved = False
 
-            elif capture[i].ip.dst == arch["S1"] and capture[i].ip.src in arch["S2"] \
-                    and capture[i].ip.len == '848' and capture[i].tcp.flags_push == '1':
+            elif capture[i].ip.src in arch["S2"] and capture[i].ip.len == '848' and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 2 is writing a message for Phone 1\n")
                 oneSentUnresolved = False
                 secondMultimediaUnresolved = False
 
             
-            elif capture[i].ip.src == arch["S1"] and capture[i].ip.dst in arch["S2"] \
-                and capture[i].ip.len == '491' and capture[i].tcp.flags_push == '1':
+            elif capture[i].ip.dst in arch["S2"] and capture[i].ip.len == '491' and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 1 has seen a message from Phone 2\n")
                 oneSentUnresolved = False
                 secondMultimediaUnresolved = False
 
-            elif capture[i].ip.dst == arch["S1"] and capture[i].ip.src in arch["S2"] \
-                and capture[i].ip.len == '977' and capture[i].tcp.flags_push == '1':
+            elif capture[i].ip.src in arch["S2"] and capture[i].ip.len == '977' and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 2 has seen a message from Phone 1\n")
                 oneSentUnresolved = False 
