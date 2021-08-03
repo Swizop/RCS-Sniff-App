@@ -3,6 +3,8 @@
     "S1": "10.0.0.1",
     "S2": ["216.239.36.128", "216.239.36.129", "216.239.36.130"],
     "S3": "216.239.36.147",
+    "S4_1": "142.250",
+    "S4_2": "216.58",
     "googleDNS": "maps.googleapis.com",
     "lh3DNS": "lh3.googleusercontent.com",
     "lh5DNS": "lh5.googleusercontent.com",

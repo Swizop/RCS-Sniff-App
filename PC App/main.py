@@ -15,23 +15,13 @@ def main():
     eventsNr = 0
     oneSentUnresolved = False
     dnsIndex = 0
-    # S1 = "10.0.0.1"
-    # S2 = ['216.239.36.128', '216.239.36.129','216.239.36.130']
-    # S3 = '216.239.36.147'
-    # googleDNS = 'maps.googleapis.com'
-    # lh3DNS = 'lh3.googleusercontent.com'
-    # lh5DNS = 'lh5.googleusercontent.com'
-    # dstDNS = '193.231.252.1'
-    # mediaDNS = 'rcs-user-content-eu.storage.googleapis.com'
-    # twoSentList = ["2PUSH", "1PUSH", "2ACK", "1ACK", "1PUSH", "2ACK", "2PUSH", "1ACK"]
-    # twoLocationList = ["2PUSH", "1ACK", "2PUSH", "1ACK", "1PUSH", "2ACK"]
     prev = NULL
     secondMultimediaUnresolved = False
 
     i = 0
     while i < len(capture):
         try:
-            if capture[i].ip.src in arch["S2"] and (capture[i].ip.len == '1398') and capture[i].tcp.flags_push == '1':
+            if capture[i].ip.src in arch["S2"] and (capture[i].ip.len == '1398' or capture[i].ip.len == '1500') and capture[i].tcp.flags_push == '1':
                 if capture[i + 5].ip.dst == arch["S3"] or capture[i + 6].ip.dst == arch["S3"] or capture[i + 4].ip.dst == arch["S3"]\
                     or (capture[i + 5].ip.dst == arch["dstDNS"] and capture[i + 5].dns.qry_name == arch["mediaDNS"]):
                     eventsNr += 1
@@ -51,14 +41,12 @@ def main():
                     if j >= len(capture):
                         b = False
                         break
-                    if arch["twoLocationList"][k][0] == '1' \
-                        and not(capture[j].ip.src == '10.0.0.1' and capture[j].ip.dst in arch["S2"]):
+                    if arch["twoLocationList"][k][0] == '1' and not(capture[j].ip.dst in arch["S2"]):
                         if k == 1:              #sometimes the expected second packet is skipped
                             continue
                         b = False
                         break
-                    if arch["twoLocationList"][k][0] == '2' \
-                        and not(capture[j].ip.dst == '10.0.0.1' and capture[j].ip.src in arch["S2"]):
+                    if arch["twoLocationList"][k][0] == '2' and not(capture[j].ip.src in arch["S2"]):
                         b = False
                         break
                     if capture[j].tcp.flags_push != '1' and arch["twoLocationList"][k][1:] == 'PUSH':
@@ -74,7 +62,7 @@ def main():
                         if capture[j].dns.qry_name != arch["googleDNS"]:
                             b = False
                     except AttributeError:
-                        if capture[j].ip.dst[:7] != '142.250' and capture[j].ip.dst[:6] != '216.58':
+                        if capture[j].ip.dst[:7] != arch["S4_1"] and capture[j].ip.dst[:6] != arch["S4_2"]:
                             b = False
 
                     if b == True:
