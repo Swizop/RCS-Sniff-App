@@ -1,4 +1,5 @@
 from asyncio.windows_events import NULL
+from logging import fatal
 from re import T
 import pyshark
 import json
@@ -53,6 +54,10 @@ def main():
                         b = False 
                         break
                     if capture[j].tcp.flags_ack != '1' and arch["twoLocationList"][k][1:] == 'ACK':
+                        b = False
+                        break
+                    if capture[j].ip.len == arch["W2len"] and capture[j].ip.src in arch["S2"]:      #there is a case in which the location algorithm
+                                                                                                #interferes with the second "seen event" 
                         b = False
                         break
                     j += 1
