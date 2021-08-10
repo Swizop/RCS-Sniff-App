@@ -20,7 +20,6 @@ def main():
     while i < len(capture):
         try:
             if capture[i].ip.src in arch["S2"] and capture[i].ip.len in arch["MM2len"] and capture[i].tcp.flags_push == '1':
-                print(capture[i+7])
                 if capture[i + 5].ip.dst == arch["S3"] or capture[i + 6].ip.dst == arch["S3"] or capture[i + 4].ip.dst == arch["S3"]\
                     or (capture[i + 5].ip.dst == arch["dstDNS"] and capture[i + 5].dns.qry_name == arch["mediaDNS"])\
                     or (capture[i + 6].ip.dst == arch["dstDNS"] and capture[i + 6].dns.qry_name == arch["mediaDNS"]):
