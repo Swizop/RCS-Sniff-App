@@ -1,6 +1,4 @@
 from asyncio.windows_events import NULL
-from logging import fatal
-from re import T
 import pyshark
 import json
 
@@ -9,13 +7,12 @@ def main():
     arch = json.load(network)
     network.close()
 
-    c = pyshark.FileCapture('229r10r24r7r8r.cap', display_filter=arch["display"])
+    c = pyshark.FileCapture('0973.cap', display_filter=arch["display"])
     capture = list(c)
     c.close()
     g = open("output.txt", 'w')
     eventsNr = 0
-    oneSentUnresolved = False
-    dnsIndex = 0
+    pendingLocation = False
     prev = NULL
     secondMultimediaUnresolved = False
 
@@ -23,15 +20,16 @@ def main():
     while i < len(capture):
         try:
             if capture[i].ip.src in arch["S2"] and capture[i].ip.len in arch["MM2len"] and capture[i].tcp.flags_push == '1':
+                print(capture[i+7])
                 if capture[i + 5].ip.dst == arch["S3"] or capture[i + 6].ip.dst == arch["S3"] or capture[i + 4].ip.dst == arch["S3"]\
-                    or (capture[i + 5].ip.dst == arch["dstDNS"] and capture[i + 5].dns.qry_name == arch["mediaDNS"]):
+                    or (capture[i + 5].ip.dst == arch["dstDNS"] and capture[i + 5].dns.qry_name == arch["mediaDNS"])\
+                    or (capture[i + 6].ip.dst == arch["dstDNS"] and capture[i + 6].dns.qry_name == arch["mediaDNS"]):
                     eventsNr += 1
                     g.write(f"Event {eventsNr}. Phone 2 sent a multimedia message to Phone 1\n")
                     i = i + 6
                     secondMultimediaUnresolved = True
                     while i < len(capture) and capture[i].ip.dst in [arch["S3"], arch["mediaDNS"]]:
                         i += 1
-                    oneSentUnresolved = False
 
 
             if capture[i].ip.src in arch["S2"] and capture[i].tcp.flags_push == '1':
@@ -67,47 +65,37 @@ def main():
                         if capture[j].dns.qry_name != arch["googleDNS"]:
                             b = False
                     except AttributeError:
-                        if capture[j].ip.dst[:7] != arch["S4_1"] and capture[j].ip.dst[:6] != arch["S4_2"]:
+                        if capture[j].ip.dst[:7] != arch["S4_1"] and capture[j].ip.dst[:6] != arch["S4_2"] and capture[j].ip.dst[:7] != arch["S4_3"]:
                             b = False
 
                     if b == True:
                         eventsNr += 1
                         g.write(f"Event {eventsNr}. Phone 2 sent its location to Phone 1\n")
                         secondMultimediaUnresolved = False
-                        while b == True:
-                            if capture[j].ip.dst in arch["S2"] and capture[j + 1].ip.dst in arch["S2"] and capture[j + 1].tcp.flags_push == '1'\
-                                 and capture[j + 2].ip.src in arch["S2"] and capture[j + 3].ip.src in arch["S2"] and capture[j + 3].tcp.flags_push == '1'\
-                                      and capture[j + 4].ip.dst in arch["S2"]:
-                                b = False
-                                i = j + 5
-                                if i >= len(capture):
-                                    return
-                            j += 1
+                        i = j + 3
+                        if i >= len(capture):
+                            return
 
 
             if capture[i].ip.dst in arch["S2"] and capture[i].ip.len == arch["W1len"] and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 1 is writing a message for Phone 2\n")
-                oneSentUnresolved = False
                 secondMultimediaUnresolved = False
 
             elif capture[i].ip.src in arch["S2"] and capture[i].ip.len == arch["W2len"] and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 2 is writing a message for Phone 1\n")
-                oneSentUnresolved = False
                 secondMultimediaUnresolved = False
 
             
             elif capture[i].ip.dst in arch["S2"] and capture[i].ip.len == arch["S1len"] and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 1 has seen a message from Phone 2\n")
-                oneSentUnresolved = False
                 secondMultimediaUnresolved = False
 
             elif capture[i].ip.src in arch["S2"] and capture[i].ip.len == arch["S2len"] and capture[i].tcp.flags_push == '1':
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 2 has seen a message from Phone 1\n")
-                oneSentUnresolved = False 
                 secondMultimediaUnresolved = False
             
 
@@ -145,37 +133,18 @@ def main():
                     secondMultimediaUnresolved = False
 
 
-            elif capture[i].ip.src == arch["S1"] and capture[i].ip.dst in arch["S2"] \
-                and int(capture[i].ip.len) >= arch["Sent1len"] and capture[i].tcp.flags_push == '1' and\
+            elif capture[i].ip.dst in arch["S2"] and int(capture[i].ip.len) >= arch["Sent1len"] and capture[i].tcp.flags_push == '1' and\
                      (prev == NULL or prev.ip.len == arch["Prevlen"]):
                 nr = int(capture[i].ip.len) - arch["Sent1len"]
-                oneSentUnresolved = True
-                expected = "2ACK"
-            
-            elif oneSentUnresolved == True and capture[i].ip.dst == arch["S1"] and capture[i].ip.src in arch["S2"]:
-                if capture[i].tcp.flags_push == '1' and capture[i].ip.len == arch["Pushlen"]:
-                    if expected == "2PUSH":
-                        expected = "1ACK"
-                    else:
-                        oneSentUnresolved = False
-                elif capture[i].tcp.flags_ack == '1' and capture[i].ip.len == arch["Acklen"]:
-                    if expected == "2ACK":
-                        expected = "2PUSH"
-                    else:
-                        oneSentUnresolved = False
-                else:
-                    oneSentUnresolved = False
-
-            elif oneSentUnresolved == True and capture[i].ip.src == arch["S1"] and capture[i].ip.dst in arch["S2"]:
-                if capture[i].tcp.flags_ack == '1' and capture[i].ip.len == arch["Acklen"]:
-                    if expected == "1ACK":
-                        eventsNr += 1
-                        g.write(f"Event {eventsNr}. Phone 1 sent a text message to Phone 2, which is {nr} characters long\n")
-                oneSentUnresolved = False
-                secondMultimediaUnresolved = False
+                if capture[i + 1].ip.src in arch["S2"] and capture[i + 1].ip.len == arch["Acklen"]\
+                    and capture[i + 2].ip.src in arch["S2"] and capture[i + 2].ip.len == arch["Pushlen"]\
+                        and capture[i + 3].ip.dst in arch["S2"] and capture[i + 3].ip.len == arch["Acklen"]:
+                    g.write(f"Event {eventsNr}. Phone 1 sent a text message to Phone 2, which is {nr} characters long\n")
+                    secondMultimediaUnresolved = False
+                    i = i + 3
+    
 
             elif capture[i].ip.dst == arch["S3"] and secondMultimediaUnresolved == False:
-                oneSentUnresolved = False
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 1 sent a multimedia message to Phone 2\n")
                 while i < len(capture):
@@ -187,18 +156,18 @@ def main():
                     if capture[i].ip.dst == arch["S3"] and capture[i].tcp.flags_ack == '1':
                         break
                     i += 1
-            elif capture[i].ip.dst == arch["S3"]:
-                oneSentUnresolved = False
 
             
             elif capture[i].ip.dst == arch["dstDNS"]:
-                if capture[i].dns.qry_name in [arch["googleDNS"], arch["lh3DNS"], arch["lh5DNS"]]:
-                    if dnsIndex == 0:
-                        dnsIndex = 1
-                        eventsNr += 1
-                        g.write(f"Event {eventsNr}. Phone 1 sent its location to Phone 2\n")
-                    else:
-                        dnsIndex -= 1           #there should be 2 DNS packets sent to the IP for the same request
+                if capture[i].dns.qry_name in [arch["googleDNS"], arch["lh3DNS"], arch["lh5DNS"]] and pendingLocation == False:
+                    pendingLocation = True
+                    eventsNr += 1
+                    g.write(f"Event {eventsNr}. Phone 1 sent its location to Phone 2\n")
+
+            elif capture[i].ip.dst in [arch["S4_1"], arch["S4_2"], arch["S4_3"]]:
+                if capture[i].tcp.flags_fin == '1':
+                    pendingLocation = False
+
             try:
                 prev = capture[i]
             except IndexError:
