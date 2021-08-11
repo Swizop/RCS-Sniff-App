@@ -7,7 +7,7 @@ def main():
     arch = json.load(network)
     network.close()
 
-    c = pyshark.FileCapture('0973.cap', display_filter=arch["display"])
+    c = pyshark.FileCapture('005712067.cap', display_filter=arch["display"])
     capture = list(c)
     c.close()
     g = open("output.txt", 'w')
@@ -66,6 +66,8 @@ def main():
                     except AttributeError:
                         if capture[j].ip.dst[:7] != arch["S4_1"] and capture[j].ip.dst[:6] != arch["S4_2"] and capture[j].ip.dst[:7] != arch["S4_3"]:
                             b = False
+                    except IndexError:
+                        b = False
 
                     if b == True:
                         eventsNr += 1
@@ -163,7 +165,7 @@ def main():
                     eventsNr += 1
                     g.write(f"Event {eventsNr}. Phone 1 sent its location to Phone 2\n")
 
-            elif capture[i].ip.dst in [arch["S4_1"], arch["S4_2"], arch["S4_3"]]:
+            elif capture[i].ip.dst[:7] == arch["S4_1"] or capture[i].ip.dst[:6] == arch["S4_2"] or capture[i].ip.dst[:7] == arch["S4_3"]:
                 if capture[i].tcp.flags_fin == '1':
                     pendingLocation = False
 
