@@ -7,7 +7,7 @@ def main():
     arch = json.load(network)
     network.close()
 
-    c = pyshark.FileCapture('005712067.cap', display_filter=arch["display"])
+    c = pyshark.FileCapture('47.cap', display_filter=arch["display"])
     capture = list(c)
     c.close()
     g = open("output.txt", 'w')
