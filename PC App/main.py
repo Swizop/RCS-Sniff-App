@@ -16,6 +16,7 @@ def main():
     prev = NULL
     secondMultimediaUnresolved = False
 
+
     i = 0
     while i < len(capture):
         try:
