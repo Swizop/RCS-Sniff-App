@@ -13,3 +13,6 @@ By scanning a capture, it should be able to detect and signal whenever one of th
 8. The intercepted phone has received a RCS multimedia message from the second phone
 9. The intercepted phone has received a shared location through RCS from the second phone
 10. The intercepted phone has sent its location through RCS to the second phone
+
+On older versions of the Google Messages Android app, which uses RCS, HTTP is used instead of HTTPS to send the location. Therefore, the app extracts vulnerable information.
+
