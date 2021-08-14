@@ -4,30 +4,23 @@ import json
 from collections import defaultdict
 import re
 
-from pyshark.capture.capture import Capture
-
 def main():
     network = open("network.json", 'r')
     arch = json.load(network)
     network.close()
 
-    c = pyshark.FileCapture('Receive_traffic.cap', display_filter=arch["display"])
+    c = pyshark.FileCapture('Send-Receive_traffic_2.cap', display_filter=arch["display"])
     capture = list(c)
     c.close()
     g = open("output.txt", 'w')
     eventsNr = 0
     pendingLocation = False
     prev = NULL
-    secondMultimediaUnresolved = False
     coordinates = defaultdict(int)
-
 
     i = 0
     while i < len(capture):
         try:
-            # l = str(capture[i][-1])
-            # if re.search("HTTP", l):
-            #     print(1)
             if capture[i].ip.src in arch["S2"] and capture[i].ip.len in arch["MM2len"] and capture[i].tcp.flags_push == '1':
                 if capture[i + 5].ip.dst == arch["S3"] or capture[i + 6].ip.dst == arch["S3"] or capture[i + 4].ip.dst == arch["S3"]\
                     or (capture[i + 5].ip.dst == arch["dstDNS"] and capture[i + 5].dns.qry_name == arch["mediaDNS"])\
@@ -38,8 +31,6 @@ def main():
                     secondMultimediaUnresolved = True
                     while i < len(capture) and capture[i].ip.dst in [arch["S3"], arch["mediaDNS"]]:
                         i += 1
-
-            
             if capture[i].ip.src in arch["S2"] and capture[i].ip.len == arch["locationLength"]:
                 j = i + 1
                 b = True
@@ -52,6 +43,8 @@ def main():
                             if not(capture[j + 1].ip.dst in arch["S2"]):
                                 b = False
                                 break
+                        elif k == 4 and capture[j - 1].ip.dst in arch["S2"] and capture[j - 1].tcp.flags_push == '1':
+                            continue
                         else:
                             b = False
                             break
@@ -62,13 +55,6 @@ def main():
                         if k == 3:              #sometimes the expected 4th packet is skipped
                             continue
                         b = False 
-                        break
-                    if capture[j].tcp.flags_ack != '1' and arch["twoLocationList"][k][1:] == 'ACK':
-                        b = False
-                        break
-                    if capture[j].ip.len == arch["W2len"] and capture[j].ip.src in arch["S2"]:      #there is a case in which the location algorithm
-                                                                                                #interferes with the second "seen event" 
-                        b = False
                         break
                     j += 1
 
@@ -97,7 +83,7 @@ def main():
                 eventsNr += 1
                 g.write(f"Event {eventsNr}. Phone 2 has seen a message from Phone 1\n")
                 secondMultimediaUnresolved = False
-            
+
 
             elif capture[i].ip.dst == arch["S1"] and capture[i].ip.src in arch["S2"] \
                 and int(capture[i].ip.len) > arch["Sent2len"] and capture[i].tcp.flags_push == '1':
@@ -132,7 +118,7 @@ def main():
                     g.write(f"Event {eventsNr}. Phone 2 sent a text message to Phone 1, which is {nr} characters long\n")
                     secondMultimediaUnresolved = False
 
-
+            
             elif capture[i].ip.dst in arch["S2"] and int(capture[i].ip.len) >= arch["Sent1len"] and capture[i].tcp.flags_push == '1' and\
                      (prev == NULL or prev.ip.len == arch["Prevlen"]):
                 nr = int(capture[i].ip.len) - arch["Sent1len"]
@@ -142,20 +128,22 @@ def main():
                     g.write(f"Event {eventsNr}. Phone 1 sent a text message to Phone 2, which is {nr} characters long\n")
                     secondMultimediaUnresolved = False
                     i = i + 3
-    
+            
 
-            elif capture[i].ip.dst == arch["S3"] and secondMultimediaUnresolved == False:
-                eventsNr += 1
-                g.write(f"Event {eventsNr}. Phone 1 sent a multimedia message to Phone 2\n")
-                while i < len(capture):
-                    if capture[i].ip.dst == arch["S3"] and capture[i].tcp.flags_fin == '1':
-                        break
-                    i += 1
-                i += 1
-                while i < len(capture):
-                    if capture[i].ip.dst == arch["S3"] and capture[i].tcp.flags_ack == '1':
-                        break
-                    i += 1
+            co = str(capture[i].http.request_uri_query_parameter)
+            user = str(capture[i].http.user_agent)
+            if co[:3] == 'cen' and coordinates[co] == 0:
+                coordinates[co] = 1
+                if pendingLocation == False:
+                    eventsNr += 1
+                    g.write(f"Event {eventsNr}. Phone 1 sent its location to Phone 2: {co[7:]}. Intercepted device information: {user}\n")
+                else:
+                    pendingLocation = False
+                    eventsNr += 1
+                    g.write(f"Event {eventsNr}. Phone 2 sent its location to Phone 1: {co[7:]}. Intercepted device information: {user}\n")
+            # l = str(capture[i][-1])
+            # if re.search("HTTP", l):
+            #     print(1)
             
             try:
                 prev = capture[i]
@@ -164,6 +152,7 @@ def main():
     
             i += 1
         except AttributeError:
+            prev = capture[i]
             i += 1
             continue
 

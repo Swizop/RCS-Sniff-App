@@ -1,1 +1,2 @@
-Event 1. Phone 1 sent a multimedia message to Phone 2
+Event 1. Phone 1 sent its location to Phone 2: ...,.... Intercepted device information: Dalvik/2.1.0 (Linux; U; Android 10; ... Build/...)
+Event 2. Phone 2 sent its location to Phone 1: ...,.... Intercepted device information: Dalvik/2.1.0 (Linux; U; Android 10; ... Build/...)
