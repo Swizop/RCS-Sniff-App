@@ -22,5 +22,6 @@
     "dstDNS": "193.231.252.1",
     "mediaDNS": "rcs-user-content-eu.storage.googleapis.com",
     "twoSentList": ["2PUSH", "1PUSH", "2ACK", "1ACK", "1PUSH", "2ACK", "2PUSH", "1ACK"],
-    "twoLocationList": ["2PUSH", "1ACK", "2PUSH", "1ACK", "1PUSH", "2ACK"]
+    "twoLocationList": ["2ACK", "2PUSH", "1ACK", "1ACK", "1PUSH", "2ACK", "1PUSH", "2ACK", "2PUSH", "1ACK"],
+    "locationLength": "1354"
 }
